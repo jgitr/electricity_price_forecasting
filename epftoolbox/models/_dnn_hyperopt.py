@@ -19,6 +19,9 @@ from epftoolbox.data import read_data
 from epftoolbox.evaluation import MAE, sMAPE
 from functools import partial
 import os
+import pdb
+
+print('hyperopT!!!')
 
 def _build_space(nlayer, data_augmentation, n_exogenous_inputs):
     """Function that generates the hyperparameter/feature search space 
@@ -211,7 +214,7 @@ def hyperparameter_optimizer(path_datasets_folder=os.path.join('.', 'datasets'),
                              path_hyperparameters_folder=os.path.join('.', 'experimental_files'), 
                              new_hyperopt=1, max_evals=1500, nlayers=2, dataset='PJM', years_test=2, 
                              calibration_window=4, shuffle_train=1, data_augmentation=0,
-                             experiment_id=None, begin_test_date=None, end_test_date=None):
+                             experiment_id=None, begin_test_date=None, end_test_date=None, features=None):
     
     """Function to optimize the hyperparameters and input features of the DNN. An example on how to 
     use this function is provided :ref:`here<dnnex1>`.
@@ -274,6 +277,7 @@ def hyperparameter_optimizer(path_datasets_folder=os.path.join('.', 'datasets'),
         format ``"%d/%m/%Y %H:%M"``, or a datetime object.       
     
     """
+    print('entering hyperparam optimization')
 
     # Checking if provided directory for hyperparameter exists and if not create it
     if not os.path.exists(path_hyperparameters_folder):
@@ -302,8 +306,9 @@ def hyperparameter_optimizer(path_datasets_folder=os.path.join('.', 'datasets'),
 
     # Generate training and test datasets
     dfTrain, dfTest = read_data(dataset=dataset, years_test=years_test, path=path_datasets_folder,
-                                begin_test_date=begin_test_date, end_test_date=end_test_date)
+                                begin_test_date=begin_test_date, end_test_date=end_test_date, feature_selection=features)
 
+    
     n_exogenous_inputs = len(dfTrain.columns) - 1
 
     # Build hyperparamerter search space. This includes hyperparameter and features

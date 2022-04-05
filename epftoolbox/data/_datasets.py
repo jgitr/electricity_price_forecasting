@@ -9,8 +9,10 @@ Function to read electricity market data either locally or from an online databa
 
 import pandas as pd
 import os
+import pdb
+from epftoolbox.featureselection import perform_recursive_elimination
 
-def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_date=None):
+def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_date=None, feature_selection=None):
     """Function to read and import data from day-ahead electricity markets. 
     
     It receives a ``dataset`` name, and the ``path`` of the folder where datasets are saved. 
@@ -110,14 +112,17 @@ def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_
         # folder
         if os.path.exists(file_path):
             data = pd.read_csv(file_path, index_col=0)
+            print('Loading local dataset: ', file_path)
         else:
             url_dir = 'https://sandbox.zenodo.org/api/files/fb5bae17-de91-4ce7-b348-0d62e52824b5/'
             data = pd.read_csv(url_dir + dataset + '.csv', index_col=0)
             data.to_csv(file_path)
+            print('loading dataset from: ', url_dir)
     else:
         try:
             file_path = os.path.join(path, dataset + '.csv')
             data = pd.read_csv(file_path, index_col=0)
+            print('Loading local dataset: ', file_path)
         except IOError as e:
             raise IOError("%s: %s" % (path, e.strerror))
 
@@ -130,6 +135,16 @@ def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_
         columns.append('Exogenous ' + str(n_ex))
         
     data.columns = columns
+
+    if feature_selection:
+        print('Feature Selection: Recursive Elimination')
+        feature_colnames = perform_recursive_elimination(data)
+        select_colnames = [data.columns[0]] + feature_colnames
+        print('Selecting Column Names: ', select_colnames)
+        data = data[select_colnames]
+
+        # Save dataset with selected feature in anotehr location
+        #data.to_csv() # file_path = os.path.join(path, dataset + '.csv')
 
     # The training and test datasets can be defined by providing a number of years for testing
     # or by providing the init and end date of the test period
