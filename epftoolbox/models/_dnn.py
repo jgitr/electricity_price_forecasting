@@ -608,7 +608,7 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
                                  path_recalibration_folder=os.path.join('.', 'experimental_files'), 
                                  nlayers=2, dataset='BE', years_test=2, shuffle_train=True, 
                                  data_augmentation=0, calibration_window=4, new_recalibration=False, 
-                                 begin_test_date=None, end_test_date=None):
+                                 begin_test_date=None, end_test_date=None, features=None):
     """Function for easy evaluation of the DNN model in a test dataset using daily recalibration. 
     
     The test dataset is defined by a market name and the test dates dates. The function
@@ -677,14 +677,13 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
         A dataframe with all the predictions in the test dataset. The dataframe is also
         written to the folder ``path_recalibration_folder``
     """
-    print('Make sure we are loading the correclty featured dataset here!')
     # Checking if provided directory for recalibration exists and if not create it
     if not os.path.exists(path_recalibration_folder):
         os.makedirs(path_recalibration_folder)
 
     # Defining train and testing data
     df_train, df_test = read_data(dataset=dataset, years_test=years_test, path=path_datasets_folder,
-                                  begin_test_date=begin_test_date, end_test_date=end_test_date)
+                                  begin_test_date=begin_test_date, end_test_date=end_test_date, feature_selection=features)
     # Defining unique name to save the forecast
 
     forecast_file_name = 'DNN_forecast_nl' + str(nlayers) + '_dat' + str(dataset) + \

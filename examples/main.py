@@ -7,7 +7,7 @@ Simplified example for using the DNN model for forecasting prices with daily rec
 # License: AGPL-3.0 License
 
 from epftoolbox import featureselection
-from epftoolbox.models import evaluate_dnn_in_test_dataset, hyperparameter_optimizer
+from epftoolbox.models import evaluate_dnn_in_test_dataset, hyperparameter_optimizer, evaluate_lear_in_test_dataset
 from epftoolbox.featureselection import perform_recursive_elimination
 from epftoolbox.data import read_data
 import os
@@ -19,7 +19,7 @@ nlayers = 2
 
 # Market under study. If it not one of the standard ones, the file name
 # has to be provided, where the file has to be a csv file
-datasets = ['BE', 'DE', 'FR', 'PJM', 'NP']
+datasets = ['DE']#['BE', 'DE', 'FR', 'PJM', 'NP']
 
 # Number of years (a year is 364 days) in the test dataset.
 years_test = 2
@@ -37,7 +37,7 @@ data_augmentation = 0
 new_recalibration = 1
 
 # Number of years used in the training dataset for recalibration
-calibration_window = 4
+dnn_calibration_window = 4
 
 # Unique identifier to read the trials file of hyperparameter optimization
 experiment_id = 1
@@ -63,6 +63,10 @@ if not new_hyperopt:
     print('Loading Hyperparameters')
 
 
+# LEAR paramters (additional)
+lear_calibration_window = 364 * 4
+
+
 for dataset in datasets:
     print('\nCurrent dataset: ', dataset)
 
@@ -76,19 +80,26 @@ for dataset in datasets:
     pdb.set_trace()
     feature_colnames = perform_recursive_elimination(dfTrain)
     """
+
+    # LEAR
+    evaluate_lear_in_test_dataset(path_recalibration_folder=path_recalibration_folder, 
+                             path_datasets_folder=path_datasets_folder, dataset=dataset, years_test=years_test, 
+                             calibration_window=lear_calibration_window, begin_test_date=begin_test_date, 
+                             end_test_date=end_test_date)
     
+    # DNN
     hyperparameter_optimizer(path_datasets_folder=path_datasets_folder, 
                          path_hyperparameters_folder=path_hyperparameter_folder, 
                          new_hyperopt=new_hyperopt, max_evals=max_evals, nlayers=nlayers, dataset=dataset, 
-                         years_test=years_test, calibration_window=calibration_window, 
+                         years_test=years_test, calibration_window=dnn_calibration_window, 
                          shuffle_train=shuffle_train, data_augmentation=0, experiment_id=experiment_id,
-                         begin_test_date=begin_test_date, end_test_date=end_test_date, features=True)
+                         begin_test_date=begin_test_date, end_test_date=end_test_date, features='RecursiveElimination')
     
     
     evaluate_dnn_in_test_dataset(experiment_id, path_hyperparameter_folder=path_hyperparameter_folder, 
                                 path_datasets_folder=path_datasets_folder, shuffle_train=shuffle_train, 
                                 path_recalibration_folder=path_recalibration_folder, 
                                 nlayers=nlayers, dataset=dataset, years_test=years_test, 
-                                data_augmentation=data_augmentation, calibration_window=calibration_window, 
+                                data_augmentation=data_augmentation, calibration_window=dnn_calibration_window, 
                                 new_recalibration=new_recalibration, begin_test_date=begin_test_date, 
-                                end_test_date=end_test_date)
+                                end_test_date=end_test_date, features='RecursiveElimination')

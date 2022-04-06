@@ -1,0 +1,8 @@
+# Install
+python3 -m venv epfvenv && source epfvenv/bin/activate && pip install .
+
+# Run
+cd examples && python3 main.py
+
+# Uninstall
+deactivate && cd .. && rm -rf epfvenv    
