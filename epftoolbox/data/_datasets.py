@@ -9,8 +9,9 @@ Function to read electricity market data either locally or from an online databa
 
 import pandas as pd
 import os
+from epftoolbox.featureselection import perform_recursive_elimination
 
-def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_date=None):
+def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_date=None, feature_selection=None):
     """Function to read and import data from day-ahead electricity markets. 
     
     It receives a ``dataset`` name, and the ``path`` of the folder where datasets are saved. 
@@ -98,38 +99,65 @@ def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_
     if not os.path.exists(path):
         os.makedirs(path)
 
-    # If dataset is one of the existing open-access ones,
-    # they are imported if they exist locally or download from 
-    # the repository if they do not
-    if dataset in ['PJM', 'NP', 'FR', 'BE', 'DE']:
-        file_path = os.path.join(path, dataset + '.csv')
+    if feature_selection:
+        feature_file_path = os.path.join(path, dataset + str('_') + feature_selection + '.csv')
+        feature_file_exists = os.path.exists(feature_file_path)
 
-        # The first time this function is called, the datasets
-        # are downloaded and saved in a local folder
-        # After the first called they are imported from the local
-        # folder
-        if os.path.exists(file_path):
-            data = pd.read_csv(file_path, index_col=0)
-        else:
-            url_dir = 'https://sandbox.zenodo.org/api/files/fb5bae17-de91-4ce7-b348-0d62e52824b5/'
-            data = pd.read_csv(url_dir + dataset + '.csv', index_col=0)
-            data.to_csv(file_path)
+    if feature_selection and feature_file_exists:
+            data = pd.read_csv(feature_file_path, index_col = 0)
+            data.index = pd.to_datetime(data.index)
+            columns = ['Price']
+            n_exogeneous_inputs = len(data.columns) - 1
+
+            for n_ex in range(1, n_exogeneous_inputs + 1):
+                columns.append('Exogenous ' + str(n_ex))
+            data.columns = columns
+            print('Loaded Feature File: ', feature_file_path)
     else:
-        try:
+
+        # If dataset is one of the existing open-access ones,
+        # they are imported if they exist locally or download from 
+        # the repository if they do not
+        if dataset in ['PJM', 'NP', 'FR', 'BE', 'DE']:
             file_path = os.path.join(path, dataset + '.csv')
-            data = pd.read_csv(file_path, index_col=0)
-        except IOError as e:
-            raise IOError("%s: %s" % (path, e.strerror))
 
-    data.index = pd.to_datetime(data.index)
+            # The first time this function is called, the datasets
+            # are downloaded and saved in a local folder
+            # After the first called they are imported from the local
+            # folder
+            if os.path.exists(file_path):
+                data = pd.read_csv(file_path, index_col=0)
+                print('Loading local dataset: ', file_path)
+            else:
+                url_dir = 'https://sandbox.zenodo.org/api/files/fb5bae17-de91-4ce7-b348-0d62e52824b5/'
+                data = pd.read_csv(url_dir + dataset + '.csv', index_col=0)
+                data.to_csv(file_path)
+                print('loading dataset from: ', url_dir)
+        else:
+            try:
+                file_path = os.path.join(path, dataset + '.csv')
+                data = pd.read_csv(file_path, index_col=0)
+                print('Loading local dataset: ', file_path)
+            except IOError as e:
+                raise IOError("%s: %s" % (path, e.strerror))
 
-    columns = ['Price']
-    n_exogeneous_inputs = len(data.columns) - 1
+        data.index = pd.to_datetime(data.index)
+        columns = ['Price']
+        n_exogeneous_inputs = len(data.columns) - 1
 
-    for n_ex in range(1, n_exogeneous_inputs + 1):
-        columns.append('Exogenous ' + str(n_ex))
-        
-    data.columns = columns
+        for n_ex in range(1, n_exogeneous_inputs + 1):
+            columns.append('Exogenous ' + str(n_ex))
+        data.columns = columns
+
+        if feature_selection:
+            print('Performing Feature Selection: Recursive Elimination')
+            feature_colnames = perform_recursive_elimination(data)
+            select_colnames = [data.columns[0]] + feature_colnames
+            print('Selecting Column Names: ', select_colnames)
+            data = data[select_colnames]
+
+            # Save dataset with selected feature in anotehr location
+            data.to_csv(feature_file_path)
 
     # The training and test datasets can be defined by providing a number of years for testing
     # or by providing the init and end date of the test period

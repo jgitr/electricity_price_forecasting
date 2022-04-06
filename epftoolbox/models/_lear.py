@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.robust import mad
 import os
+import pdb
 
 from sklearn.linear_model import LassoLarsIC, Lasso
 from epftoolbox.data import scaling
@@ -332,8 +333,8 @@ class LEAR(object):
 
 def evaluate_lear_in_test_dataset(path_datasets_folder=os.path.join('.', 'datasets'), 
                                   path_recalibration_folder=os.path.join('.', 'experimental_files'),
-                                  dataset='PJM', years_test=2, calibration_window=364 * 3, 
-                                  begin_test_date=None, end_test_date=None):
+                                  dataset='BE', years_test=2, calibration_window=364 * 3, 
+                                  begin_test_date=None, end_test_date=None, features=None):
     """Function for easy evaluation of the LEAR model in a test dataset using daily recalibration. 
     
     The test dataset is defined by a market name and the test dates dates. The function
@@ -386,7 +387,7 @@ def evaluate_lear_in_test_dataset(path_datasets_folder=os.path.join('.', 'datase
 
     # Defining train and testing data
     df_train, df_test = read_data(dataset=dataset, years_test=years_test, path=path_datasets_folder,
-                                  begin_test_date=begin_test_date, end_test_date=end_test_date)
+                                  begin_test_date=begin_test_date, end_test_date=end_test_date, feature_selection=features)
 
     # Defining unique name to save the forecast
     forecast_file_name = 'LEAR_forecast' + '_dat' + str(dataset) + '_YT' + str(years_test) + \

@@ -91,7 +91,6 @@ class DNNModel(object):
 
         self.neurons = neurons
         self.dropout = dropout
-
         if self.dropout > 1 or self.dropout < 0:
             raise ValueError('Dropout parameter must be between 0 and 1')
 
@@ -107,7 +106,7 @@ class DNNModel(object):
         self.lambda_reg = lambda_reg
 
         self.model = self._build_model()
-
+        
         if lr is None:
             opt = 'adam'
         else:
@@ -392,7 +391,7 @@ class DNN(object):
     """
 
     def __init__(self, experiment_id, path_hyperparameter_folder=os.path.join('.', 'experimental_files'), 
-                 nlayers=2, dataset='PJM', years_test=2, shuffle_train=1, data_augmentation=0, 
+                 nlayers=2, dataset='', years_test=2, shuffle_train=1, data_augmentation=0, 
                  calibration_window=4):
 
         # Checking if provided directories exist and if not raise exception
@@ -426,7 +425,6 @@ class DNN(object):
 
         # Reading and extracting the best hyperparameters
         trials = pc.load(open(trials_file_path, "rb"))
-        
         self.best_hyperparameters = format_best_trial(trials.best_trial)
 
     def _regularize_data(self, Xtrain, Xval, Xtest, Ytrain, Yval):
@@ -578,7 +576,7 @@ class DNN(object):
             An array containing the predictions in the provided date
         
         """
-
+   
         # We define the new training dataset considering the last calibration_window years of data 
         df_train = df.loc[:next_day_date - pd.Timedelta(hours=1)]
         df_train = df_train.loc[next_day_date - pd.Timedelta(hours=self.calibration_window * 364 * 24):]
@@ -608,9 +606,9 @@ class DNN(object):
 def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.join('.', 'datasets'), 
                                  path_hyperparameter_folder=os.path.join('.', 'experimental_files'), 
                                  path_recalibration_folder=os.path.join('.', 'experimental_files'), 
-                                 nlayers=2, dataset='PJM', years_test=2, shuffle_train=True, 
+                                 nlayers=2, dataset='BE', years_test=2, shuffle_train=True, 
                                  data_augmentation=0, calibration_window=4, new_recalibration=False, 
-                                 begin_test_date=None, end_test_date=None):
+                                 begin_test_date=None, end_test_date=None, features=None):
     """Function for easy evaluation of the DNN model in a test dataset using daily recalibration. 
     
     The test dataset is defined by a market name and the test dates dates. The function
@@ -618,7 +616,8 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
     and an optimal set of hyperparameters. 
     
     Note that before using this class, a hyperparameter optimization run must be done using the
-    :class:`hyperparameter_optimizer` function. Moreover, the hyperparameter optimization must be done
+    :class:`hyperparameter_optimizer` function. Moreover, the hyperparagmvacc9.
+    eter optimization must be done
     using the same parameters: ``nlayers``, ``dataset``, ``shuffle_train``, 
     ``data_augmentation``, ``calibration_window``, and either the ``years_test`` or the same
     ``begin_test_date``/``end_test_date``
@@ -678,15 +677,13 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
         A dataframe with all the predictions in the test dataset. The dataframe is also
         written to the folder ``path_recalibration_folder``
     """
-
-
     # Checking if provided directory for recalibration exists and if not create it
     if not os.path.exists(path_recalibration_folder):
         os.makedirs(path_recalibration_folder)
 
     # Defining train and testing data
     df_train, df_test = read_data(dataset=dataset, years_test=years_test, path=path_datasets_folder,
-                                  begin_test_date=begin_test_date, end_test_date=end_test_date)
+                                  begin_test_date=begin_test_date, end_test_date=end_test_date, feature_selection=features)
     # Defining unique name to save the forecast
 
     forecast_file_name = 'DNN_forecast_nl' + str(nlayers) + '_dat' + str(dataset) + \
