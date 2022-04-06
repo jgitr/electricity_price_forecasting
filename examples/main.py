@@ -71,21 +71,20 @@ for dataset in datasets:
     print('\nCurrent dataset: ', dataset)
 
     """
-    # Recursive Elimination
-    #updated_dataset = perform_recursive_elimination(dataset)
-    dfTrain, dfTest = read_data(dataset=dataset, years_test=years_test, path=path_datasets_folder,
-                            begin_test_date=begin_test_date, end_test_date=end_test_date)
-    
+    Feature Selection modes:
 
-    pdb.set_trace()
-    feature_colnames = perform_recursive_elimination(dfTrain)
+    - RecursiveElimination
+    - RandomForest
+    - MutualInformation
     """
+
+    
 
     # LEAR
     evaluate_lear_in_test_dataset(path_recalibration_folder=path_recalibration_folder, 
                              path_datasets_folder=path_datasets_folder, dataset=dataset, years_test=years_test, 
                              calibration_window=lear_calibration_window, begin_test_date=begin_test_date, 
-                             end_test_date=end_test_date)
+                             end_test_date=end_test_date, features='RandomForest')
     
     # DNN
     hyperparameter_optimizer(path_datasets_folder=path_datasets_folder, 

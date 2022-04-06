@@ -1,1 +1,3 @@
 from ._recursive_elimination import (perform_recursive_elimination)
+from ._random_forest import (random_forest_feature_selection)
+from ._mutual_information import (mutual_information_feature_selection)

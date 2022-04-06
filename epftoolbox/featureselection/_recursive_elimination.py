@@ -13,10 +13,9 @@ from sklearn.feature_selection import RFECV
 from sklearn.linear_model import SGDClassifier
 from sklearn.feature_selection import SelectFromModel
 
-def perform_recursive_elimination(df):
+def perform_recursive_elimination(df, _feature_file_path, save_df = True):
     """
-    @dataset: str
-
+    df: data frame
     """
 
     X=df.drop(df.columns[0], axis = 1)
@@ -57,5 +56,16 @@ def perform_recursive_elimination(df):
     print('Selected Coefficients: ', coefs)
 
     # Column names of selected variables
-    out = np.array(feature_names)[selector.get_support()]
-    return out.tolist()
+    feature_colnames = np.array(feature_names)[selector.get_support()].tolist()
+    
+    select_colnames  = [df.columns[0]] + feature_colnames
+    data             = df[select_colnames]
+
+    if save_df:
+        # Save dataset with selected feature in another location
+        df.to_csv(_feature_file_path)
+
+    print('Performing Feature Selection: Recursive Elimination')
+    print('Selecting Column Names: ', select_colnames)
+    
+    return data

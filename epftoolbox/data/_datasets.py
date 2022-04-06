@@ -9,7 +9,7 @@ Function to read electricity market data either locally or from an online databa
 
 import pandas as pd
 import os
-from epftoolbox.featureselection import perform_recursive_elimination
+from epftoolbox.featureselection import perform_recursive_elimination, random_forest_feature_selection, mutual_information_feature_selection
 
 def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_date=None, feature_selection=None):
     """Function to read and import data from day-ahead electricity markets. 
@@ -149,15 +149,16 @@ def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_
             columns.append('Exogenous ' + str(n_ex))
         data.columns = columns
 
-        if feature_selection:
-            print('Performing Feature Selection: Recursive Elimination')
-            feature_colnames = perform_recursive_elimination(data)
-            select_colnames = [data.columns[0]] + feature_colnames
-            print('Selecting Column Names: ', select_colnames)
-            data = data[select_colnames]
+        if feature_selection == 'RecursiveElimination':
+            feature_colnames = perform_recursive_elimination(data, _feature_file_path = feature_file_path, save_df = True)
 
-            # Save dataset with selected feature in anotehr location
-            data.to_csv(feature_file_path)
+        elif feature_selection == 'RandomForest':
+            feature_colnames = random_forest_feature_selection(data, _feature_file_path = feature_file_path, save_df = True)
+
+        elif feature_selection == 'MutualInformation':
+            feature_colnames = mutual_information_feature_selection(data, _feature_file_path = feature_file_path, save_df = True)
+        else:
+            raise ValueError('Misspecified Feature Selection')
 
     # The training and test datasets can be defined by providing a number of years for testing
     # or by providing the init and end date of the test period
