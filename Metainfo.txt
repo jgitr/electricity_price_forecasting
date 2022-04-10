@@ -1,0 +1,6 @@
+Name of Quantlet: 'EPF'
+Published in: 'Electricity Price Forecasting'
+Description: 'Improving State-of-the-Art models on Electricity Price Forecasting'
+Keywords: Electricity, Electricity Price, Forecasting, Prediction, Energy Price, DNN, LEAR, LLWNN
+Author: Souhir Ben Amor,Julian Winkel
+Submitted: 20220410
