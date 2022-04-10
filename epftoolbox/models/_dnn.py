@@ -684,8 +684,8 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
     # Defining train and testing data
     df_train, df_test = read_data(dataset=dataset, years_test=years_test, path=path_datasets_folder,
                                   begin_test_date=begin_test_date, end_test_date=end_test_date, feature_selection=features)
+    
     # Defining unique name to save the forecast
-
     forecast_file_name = 'DNN_forecast_nl' + str(nlayers) + '_dat' + str(dataset) + \
                          '_YT' + str(years_test) + '_SFH' + str(shuffle_train) + \
                          '_DA' * data_augmentation + '_CW' + str(calibration_window) + \
@@ -693,10 +693,23 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
 
     forecast_file_path = os.path.join(path_recalibration_folder, forecast_file_name)
 
+
+    performance_file_name = 'DNN_performance_nl' + str(nlayers) + '_dat' + str(dataset) + \
+                         '_YT' + str(years_test) + '_SFH' + str(shuffle_train) + \
+                         '_DA' * data_augmentation + '_CW' + str(calibration_window) + \
+                         '_' + str(experiment_id) + '.csv'
+
+    performance_file_path = os.path.join(path_recalibration_folder, performance_file_name)
+
+
     # Defining empty forecast array and the real values to be predicted in a more friendly format
     forecast = pd.DataFrame(index=df_test.index[::24], columns=['h' + str(k) for k in range(24)])
     real_values = df_test.loc[:, ['Price']].values.reshape(-1, 24)
     real_values = pd.DataFrame(real_values, index=forecast.index, columns=forecast.columns)
+
+    performance = forecast.copy(deep = True)
+    performance['mae'] = 0
+    performance['smape'] = 0
 
     # If we are not starting a new recalibration but re-starting an old one, we import the
     # existing files and print metrics 
@@ -746,11 +759,15 @@ def evaluate_dnn_in_test_dataset(experiment_id, path_datasets_folder=os.path.joi
         mae = np.mean(MAE(forecast.loc[:date].values.squeeze(), real_values.loc[:date].values)) 
         smape = np.mean(sMAPE(forecast.loc[:date].values.squeeze(), real_values.loc[:date].values)) * 100
 
+        performance.loc[date, 'mae'] = mae
+        performance.loc[date, 'smape'] = smape
+
         # Pringint information
         print('{} - sMAPE: {:.2f}%  |  MAE: {:.3f}'.format(str(date)[:10], smape, mae))
 
         # Saving forecast
         forecast.to_csv(forecast_file_path)
+        performance.to_csv(performance_file_path)
 
     return forecast
 

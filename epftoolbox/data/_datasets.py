@@ -126,18 +126,19 @@ def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_
             # After the first called they are imported from the local
             # folder
             if os.path.exists(file_path):
-                data = pd.read_csv(file_path, index_col=0)
                 print('Loading local dataset: ', file_path)
+                data = pd.read_csv(file_path, index_col=0)
             else:
                 url_dir = 'https://sandbox.zenodo.org/api/files/fb5bae17-de91-4ce7-b348-0d62e52824b5/'
+                print('loading dataset from: ', url_dir)
                 data = pd.read_csv(url_dir + dataset + '.csv', index_col=0)
                 data.to_csv(file_path)
-                print('loading dataset from: ', url_dir)
         else:
             try:
                 file_path = os.path.join(path, dataset + '.csv')
-                data = pd.read_csv(file_path, index_col=0)
                 print('Loading local dataset: ', file_path)
+                data = pd.read_csv(file_path, index_col=0)
+                
             except IOError as e:
                 raise IOError("%s: %s" % (path, e.strerror))
 
@@ -158,7 +159,7 @@ def read_data(path, dataset='PJM', years_test=2, begin_test_date=None, end_test_
         elif feature_selection == 'MutualInformation':
             feature_colnames = mutual_information_feature_selection(data, _feature_file_path = feature_file_path, save_df = True)
         else:
-            raise ValueError('Misspecified Feature Selection')
+            print('No Feature Selection')
 
     # The training and test datasets can be defined by providing a number of years for testing
     # or by providing the init and end date of the test period
