@@ -20,7 +20,7 @@ nlayers = 2
 # Market under study. If it not one of the standard ones, the file name
 # has to be provided, where the file has to be a csv file
 #datasets = ['NP']#['BE', 'DE', 'FR', 'PJM', 'NP']
-datasets = ['BE_IMF0']
+datasets = ['BE_IMF' + str(x) for x in [0,1,2,3,4,5,6,7,8]]
 
 # Number of years (a year is 364 days) in the test dataset.
 years_test = 2
@@ -78,8 +78,10 @@ for dataset in datasets:
     - RecursiveElimination
     - RandomForest
     - MutualInformation
+
+    If the hyperparamters for the DNN cannot be loaded, then you got to set new_hyperopt = 1
     """
-    """
+    
     # LEAR
     evaluate_lear_in_test_dataset(path_recalibration_folder=path_recalibration_folder, 
                              path_datasets_folder=path_datasets_folder, dataset=dataset, years_test=years_test, 
@@ -103,4 +105,4 @@ for dataset in datasets:
                                 data_augmentation=data_augmentation, calibration_window=dnn_calibration_window, 
                                 new_recalibration=new_recalibration, begin_test_date=begin_test_date, 
                                 end_test_date=end_test_date, features=None)
-    
+    """

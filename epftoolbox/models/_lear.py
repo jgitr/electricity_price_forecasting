@@ -15,7 +15,7 @@ import pdb
 from sklearn.linear_model import LassoLarsIC, Lasso
 from epftoolbox.data import scaling
 from epftoolbox.data import read_data
-from epftoolbox.evaluation import MAE, sMAPE
+from epftoolbox.evaluation import MAE, sMAPE, RMSE
 
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -395,7 +395,13 @@ def evaluate_lear_in_test_dataset(path_datasets_folder=os.path.join('.', 'datase
 
     forecast_file_path = os.path.join(path_recalibration_folder, forecast_file_name)
 
+    # Defining unique name to save the performance
+    performance_file_name = 'LEAR_performance' + '_dat' + str(dataset) + '_YT' + str(years_test) + \
+                         '_CW' + str(calibration_window) + '.csv'
 
+    performance_file_path = os.path.join(path_recalibration_folder, performance_file_name)
+
+    
     # Defining empty forecast array and the real values to be predicted in a more friendly format
     forecast = pd.DataFrame(index=df_test.index[::24], columns=['h' + str(k) for k in range(24)])
     real_values = df_test.loc[:, ['Price']].values.reshape(-1, 24)
@@ -404,6 +410,11 @@ def evaluate_lear_in_test_dataset(path_datasets_folder=os.path.join('.', 'datase
     forecast_dates = forecast.index
 
     model = LEAR(calibration_window=calibration_window)
+
+    performance = forecast.copy(deep = True)
+    performance['mae'] = 0
+    performance['smape'] = 0
+    performance['rmse'] = 0
 
     # For loop over the recalibration dates
     for date in forecast_dates:
@@ -425,11 +436,17 @@ def evaluate_lear_in_test_dataset(path_datasets_folder=os.path.join('.', 'datase
         # Computing metrics up-to-current-date
         mae = np.mean(MAE(forecast.loc[:date].values.squeeze(), real_values.loc[:date].values)) 
         smape = np.mean(sMAPE(forecast.loc[:date].values.squeeze(), real_values.loc[:date].values)) * 100
+        rmse = np.mean(RMSE(forecast.loc[:date].values.squeeze(), real_values.loc[:date].values))
+        
+        performance.loc[date, 'mae'] = mae
+        performance.loc[date, 'smape'] = smape
+        performance.loc[date, 'rmse'] = rmse
 
         # Pringint information
         print('{} - sMAPE: {:.2f}%  |  MAE: {:.3f}'.format(str(date)[:10], smape, mae))
 
         # Saving forecast
         forecast.to_csv(forecast_file_path)
+        performance.to_csv(performance_file_path)
 
     return forecast
